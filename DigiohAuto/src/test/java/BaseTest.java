@@ -37,6 +37,7 @@ public class BaseTest {
         username = PropertyUtil.getInstance().getValue("digiohPortalUsername");
         password = PropertyUtil.getInstance().getValue("digiohPortalPassword");
         seleniumUtil =  new SeleniumUtil();
+        driver.manage().window().maximize();
     }
 
     private WebDriver setBrowser(String browserName) throws MalformedURLException {
