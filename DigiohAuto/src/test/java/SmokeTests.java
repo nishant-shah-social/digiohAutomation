@@ -6,6 +6,8 @@ import UI.BoxObjects.EmailBox;
 import UI.DigiohDashboardPages.AnalyticsSubmissionsPage;
 import UI.DigiohDashboardPages.DashboardPage;
 import UI.DigiohDashboardPages.LoginPage;
+import UI.SeleniumUtils.SeleniumUtil;
+import UI.TestAppPages.TestAppHomePage;
 import io.qameta.allure.Description;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
@@ -20,7 +22,17 @@ public class SmokeTests extends BaseTest {
     @Description("Verifying basic digioh box appears successfully under different conditions controlled by the url path")
     public void basicBoxTest(String urlPath) throws Exception {
         BasicBox basicBox = new BasicBox(driver);
+        TestAppHomePage testAppHomePage = new TestAppHomePage(driver);
         driver.get(testPageBaseUrl+urlPath);
+
+        //if tag version contains speed then we need
+        //to perform some action for the digioh box to appear
+        if(urlPath.contains("speed")){
+            SeleniumUtil.waitForSpecifiedSeconds(5);
+            Assert.assertFalse(testAppHomePage.basicBoxShownOnThePage(),"Basic box is appearing without any action been performed");
+            SeleniumUtil.scrollDownABit(driver);
+        }
+
         String textInsideBox = basicBox.getTextInsideBox();
         basicBox.closeBox();
         Boolean isBoxVisible = basicBox.isBoxVisible();
