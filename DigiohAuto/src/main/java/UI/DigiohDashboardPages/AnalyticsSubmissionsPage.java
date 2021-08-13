@@ -50,7 +50,7 @@ public class AnalyticsSubmissionsPage extends BasePage {
         String geoLocation = rw.findElement(By.xpath("td[4]")).getText();
         String date = rw.findElement(By.xpath("td[5]")).getText();
 
-        if(geoLocation.equals("India") && date.contains(genericUtil.getTodaysDate()))
+        if(date.contains(genericUtil.getTodaysDate()))
             return true;
         else
             return false;

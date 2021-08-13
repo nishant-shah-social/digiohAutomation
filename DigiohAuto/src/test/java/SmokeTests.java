@@ -23,7 +23,12 @@ public class SmokeTests extends BaseTest {
     public void basicBoxTest(String urlPath) throws Exception {
         BasicBox basicBox = new BasicBox(driver);
         TestAppHomePage testAppHomePage = new TestAppHomePage(driver);
-        driver.get(testPageBaseUrl+urlPath);
+
+        if(urlPath.contains("HTTP_PROTOCOL")){
+            testPageBaseUrl = testPageBaseUrl.replace("https","http");
+        }
+
+        driver.get(testPageBaseUrl + urlPath);
 
         //if tag version contains speed then we need
         //to perform some action for the digioh box to appear
