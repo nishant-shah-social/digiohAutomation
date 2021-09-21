@@ -83,6 +83,11 @@
             <artifactId>aspectjweaver</artifactId>
             <version>${aspectj.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.ipgeolocation</groupId>
+            <artifactId>ipgeolocation</artifactId>
+            <version>1.0.12</version>
+        </dependency>
     </dependencies>
 
 </project>
