@@ -267,22 +267,22 @@ public class SmokeTests extends BaseTest {
     @Description("Verify the api.getUrlHash() fetches the url hash correctly")
     public void digiohAPIgetUrlHash() throws Exception {
         BasicBox basicBox = new BasicBox(driver);
-        driver.get(testPageBaseUrl+"/?CURRENT_PAGE_URL_CONTAINS&tv=inline#:~:text=Search-,Recent%20Posts,-Test%20Automation");
-
-        basicBox.getTextInsideBox();
-        driver.switchTo().defaultContent();
-
+        driver.get(testPageBaseUrl+"/#test");
+        Thread.sleep(3000);
         String jsGetUrlHash = "return DIGIOH_API.getUrlHash();";
         String urlHash = SeleniumUtil.executeJavascript(driver, jsGetUrlHash);
 
-        Assert.assertTrue(urlHash.equals("#:~:text=Search-,Recent%20Posts,-Test%20Automation"),
-                "Incorrect Domain name fetched by getUrlHash(). Expected:- #:~:text=Search-,Recent%20Posts,-Test%20Automation, Actual:- "+urlHash );
+        Assert.assertTrue(urlHash.equals("#test"),
+                "Incorrect Domain name fetched by getUrlHash(). Expected:- #test, Actual:- "+urlHash );
     }
 
     @Test(description = "Verify api.getLandingPageUrl()")
     @Severity(SeverityLevel.NORMAL)
     @Description("Verify the api.getLandingPageUrl() fetches the url hash correctly")
     public void digiohAPIgetLandingPageUrl() throws Exception {
+        driver.quit();
+        setUp();
+
         BasicBox basicBox = new BasicBox(driver);
         driver.get(testPageBaseUrl+"/?CURRENT_PAGE_URL_CONTAINS&tv=inline");
         basicBox.getTextInsideBox();
@@ -523,7 +523,8 @@ public class SmokeTests extends BaseTest {
         Geolocation geo = GenericUtil.getGeoLocationOfClient();
 
         String expectedPostalCode = geo.getZipCode();
-        Assert.assertEquals(actualClientPostalCode, expectedPostalCode,"Value of getClientPostalCode() is not correct. Actual "+ actualClientPostalCode + " expected:- "+ expectedPostalCode);
+        Assert.assertEquals(actualClientPostalCode.length(), expectedPostalCode.length(), "actual and expected postal codes are of different lengths");
+        Assert.assertEquals(actualClientPostalCode.substring(0,3), expectedPostalCode.substring(0,3),"First three digits of the actual and expected postal codes are different");
     }
 
     @Test(description = "Verify api.getOperatingSystem()")
@@ -565,7 +566,8 @@ public class SmokeTests extends BaseTest {
 
         String jsGetClientBrowserVersion = "return DIGIOH_API.getBrowserVersion();";
         String actualBrowserVersion = Long.toString(SeleniumUtil.executeJavascript_Long(driver, jsGetClientBrowserVersion));
-        String expectedBrowserVersion = ((RemoteWebDriver) driver).getCapabilities().getVersion();
+        String expectedBrowserVersion = ((RemoteWebDriver) driver).getCapabilities().getVersion().split("[.]")[0];
+
         Assert.assertEquals(actualBrowserVersion, expectedBrowserVersion.toLowerCase(),"Value of digiohAPIgetBrowserVersion() is not correct. Actual "+ actualBrowserVersion + " expected:- "+ expectedBrowserVersion);
     }
 
@@ -768,9 +770,10 @@ public class SmokeTests extends BaseTest {
         String jsgetDaysSinceLastPageView = "return DIGIOH_API.getDaysSinceLastPageview();";
         Long actualDaysSinceLastPageView= SeleniumUtil.executeJavascript_Long(driver, jsgetDaysSinceLastPageView);
 
-        Assert.assertEquals(actualDaysSinceLastPageView,Long.valueOf(18889),"value of DIGIOH_API.getDaysSinceLastPageview() is incorrect. Expected:- 18889. Actual is :- "+actualDaysSinceLastPageView);
+        Assert.assertEquals(actualDaysSinceLastPageView,Long.valueOf(0),"value of DIGIOH_API.getDaysSinceLastPageview() is incorrect. Expected:- 18889. Actual is :- "+actualDaysSinceLastPageView);
 
         driver.navigate().refresh();
+        Thread.sleep(3000);
         actualDaysSinceLastPageView= SeleniumUtil.executeJavascript_Long(driver, jsgetDaysSinceLastPageView);
 
         Assert.assertEquals(actualDaysSinceLastPageView,Long.valueOf(0),"value of DIGIOH_API.getDaysSinceLastPageview() is incorrect. Expected:- 0. Actual is :- "+actualDaysSinceLastPageView);
