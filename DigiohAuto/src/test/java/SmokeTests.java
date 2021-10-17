@@ -16,6 +16,7 @@ import org.apache.tika.utils.SystemUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Cookie;
 import org.openqa.selenium.Platform;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -79,6 +80,9 @@ public class SmokeTests extends BaseTest {
 
         Assert.assertTrue(analyticsSubmissionsPage.isEmailPresentInTheTable(email), "Email:- "+email+" not appearing in Analytics page");
         Assert.assertTrue(analyticsSubmissionsPage.verifyDetailsOfEmail(email),"Details of the email are not appearing correctly.");
+
+        dashboardPage.logoutPage(driver);
+
     }
 
     @Test(description = "Verifying proper validation message is displayed when invalid email is entered in the Email box")
@@ -770,12 +774,432 @@ public class SmokeTests extends BaseTest {
         String jsgetDaysSinceLastPageView = "return DIGIOH_API.getDaysSinceLastPageview();";
         Long actualDaysSinceLastPageView= SeleniumUtil.executeJavascript_Long(driver, jsgetDaysSinceLastPageView);
 
-        Assert.assertEquals(actualDaysSinceLastPageView,Long.valueOf(0),"value of DIGIOH_API.getDaysSinceLastPageview() is incorrect. Expected:- 18889. Actual is :- "+actualDaysSinceLastPageView);
+        Assert.assertEquals(actualDaysSinceLastPageView,Long.valueOf(0),"value of DIGIOH_API.getDaysSinceLastPageview() is incorrect. Expected:- 0. Actual is :- "+actualDaysSinceLastPageView);
 
         driver.navigate().refresh();
         Thread.sleep(3000);
         actualDaysSinceLastPageView= SeleniumUtil.executeJavascript_Long(driver, jsgetDaysSinceLastPageView);
 
         Assert.assertEquals(actualDaysSinceLastPageView,Long.valueOf(0),"value of DIGIOH_API.getDaysSinceLastPageview() is incorrect. Expected:- 0. Actual is :- "+actualDaysSinceLastPageView);
+    }
+
+    @Test(description = "Verify api.getAccountId() & api.getAccountGuid()")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Verify the api.getAccountId() & api.getAccountGuid() returns the respective ids of your digioh account")
+    public void digiohAPIgetUserAccountIds() throws Exception {
+       // List<String> ids = dashboardPage.fetchAccountIds("Blank Lightbox");
+        List<String> ids = new ArrayList<>();
+        ids.add("43508");
+        ids.add("7d49bc08-bf68-4971-901f-1743a41b5417");
+        BasicBox basicBox = new BasicBox(driver);
+
+        driver.get(testPageBaseUrl+"/?CURRENT_PAGE_URL_CONTAINS&tv=inline");
+
+        basicBox.getTextInsideBox();
+        basicBox.closeBox();
+        driver.switchTo().defaultContent();
+
+        String jsGetAccountId = "return DIGIOH_API.getAccountId();";
+        String actualAccountId = SeleniumUtil.executeJavascript(driver, jsGetAccountId);
+
+        String jsGetAccountGuid = "return DIGIOH_API.getAccountGuid();";
+        String actualAccountGuid = SeleniumUtil.executeJavascript(driver, jsGetAccountGuid);
+
+        List<String> actualIds = new ArrayList<>();
+        actualIds.add(actualAccountId);
+        actualIds.add(actualAccountGuid);
+
+        Assert.assertEquals(actualIds,ids,"value of DIGIOH_API.getAccountGuid() or DIGIOH_API.getAccountId() are incorrect. Expected :-"+ids.get(1)+" Actual is :- "+actualAccountGuid);
+    }
+
+    @Test(description = "Verify api.getBoxGUID(string boxId) & api.getBoxID(string box Guid)")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Verify the api.getBoxGUID(string boxId) & api.getBoxID(string box Guid) returns the box id and guid respectively")
+    public void digiohAPIgetBoxIds() throws Exception {
+        driver.get(portalBaseUrl);
+        LoginPage loginPage = new LoginPage(driver);
+        DashboardPage dashboardPage = loginPage.login(username,password);
+        List<String> ids = dashboardPage.fetchAccountIds("Blank Lightbox");
+        dashboardPage.logoutPage(driver);
+        BasicBox basicBox = new BasicBox(driver);
+
+        driver.get(testPageBaseUrl+"/?CURRENT_PAGE_URL_CONTAINS&tv=inline");
+
+        basicBox.getTextInsideBox();
+        basicBox.closeBox();
+        driver.switchTo().defaultContent();
+
+        String jsGetBoxGuid = "return DIGIOH_API.getBoxGUID('"+ids.get(0)+"');";
+        String actualBoxGuid = SeleniumUtil.executeJavascript(driver, jsGetBoxGuid);
+
+        String jsGetAccountId = "return DIGIOH_API.getBoxID('"+ids.get(1)+"');";
+        String actualBoxId = SeleniumUtil.executeJavascript(driver, jsGetAccountId);
+
+        Assert.assertEquals(actualBoxId,ids.get(0),"value of DIGIOH_API.getBoxID() is incorrect. Expected :-"+ids.get(0)+" Actual is :- "+actualBoxId);
+        Assert.assertEquals(actualBoxGuid,ids.get(1),"value of DIGIOH_API.getBoxGUID() is incorrect. Expected :-"+ids.get(1)+" Actual is :- "+actualBoxGuid);
+    }
+
+    @Test(description = "Verify api.openBox(string boxId) & api.closeBox(string boxId)")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Verify the api.openBox(string boxId) & api.closeBox successfully opens up and closes the digioh box")
+    public void digiohAPIopenAndCloseBox() throws Exception {
+        driver.get(portalBaseUrl);
+        LoginPage loginPage = new LoginPage(driver);
+        DashboardPage dashboardPage = loginPage.login(username,password);
+        List<String> ids = dashboardPage.fetchAccountIds("Blank Lightbox");
+        dashboardPage.logoutPage(driver);
+        BasicBox basicBox = new BasicBox(driver);
+
+        driver.get(testPageBaseUrl+"/newurl");
+        Thread.sleep(3000);
+
+        //opening and closing the digioh box via id
+        String jsOpenBox = "return DIGIOH_API.openBox('"+ids.get(0)+"');";
+        SeleniumUtil.executeJavascript(driver, jsOpenBox);
+
+        String textInsideBox = basicBox.getTextInsideBox();
+        driver.switchTo().defaultContent();
+
+        String jsCloseBox = "return DIGIOH_API.closeBox('"+ids.get(0)+"');";
+        SeleniumUtil.executeJavascript(driver, jsCloseBox);
+
+        Boolean isBoxVisible = basicBox.isBoxVisible();
+        Assert.assertTrue(isBoxVisible.equals(false),"Basic Box is not disappearing after executing DIGIOH_API.closeBox()");
+
+        //opening and closing the digioh box via GUID
+        String jsOpenBox2 = "return DIGIOH_API.openBox('"+ids.get(1)+"');";
+        SeleniumUtil.executeJavascript(driver, jsOpenBox2);
+
+        String textInsideBox2 = basicBox.getTextInsideBox();
+        driver.switchTo().defaultContent();
+
+        String jsCloseBox2 = "return DIGIOH_API.closeBox('"+ids.get(1)+"');";
+        SeleniumUtil.executeJavascript(driver, jsCloseBox2);
+
+        Boolean isBoxVisible2 = basicBox.isBoxVisible();
+        Assert.assertTrue(isBoxVisible2.equals(false),"Basic Box is not disappearing after executing DIGIOH_API.closeBox()");
+    }
+
+    @Test(description = "Verify api.writeCustomFlag(string flagId)")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Verify the api.writeCustomFlag(string flagId) creates a div successfully")
+    public void digiohAPIwriteCustomFlag() throws Exception {
+        BasicBox basicBox = new BasicBox(driver);
+        driver.get(testPageBaseUrl+"/?CURRENT_PAGE_URL_CONTAINS&tv=inline");
+
+        basicBox.getTextInsideBox();
+        basicBox.closeBox();
+        driver.switchTo().defaultContent();
+
+        String jswriteCustomFlag = "return DIGIOH_API.writeCustomFlag('automation_id');";
+        SeleniumUtil.executeJavascript(driver, jswriteCustomFlag);
+
+        WebElement test = driver.findElement(By.id("automation_id"));
+
+        Assert.assertNotNull(test,"new div not created by api.writeCustomFlag()");
+    }
+
+    @Test(description = "Verify api.isValidEmail(email)")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Verify the api.isValidEmail(email) successfully validates the email")
+    public void digiohAPIisValidEmail() throws Exception {
+        BasicBox basicBox = new BasicBox(driver);
+        driver.get(testPageBaseUrl+"/?CURRENT_PAGE_URL_CONTAINS&tv=inline");
+
+        basicBox.getTextInsideBox();
+        basicBox.closeBox();
+        driver.switchTo().defaultContent();
+
+        String jsisValidEmail = "return DIGIOH_API.isValidEmail('automation@digioh.com');";
+        Boolean isValid = SeleniumUtil.executeJavascript_Boolean(driver, jsisValidEmail);
+        Assert.assertTrue(isValid,"api.isValidEmail() not returning true even for valid email:- automation@digioh.com");
+
+        jsisValidEmail = "return DIGIOH_API.isValidEmail('automation@digioh.co.uk');";
+        Boolean isValid2 = SeleniumUtil.executeJavascript_Boolean(driver, jsisValidEmail);
+        Assert.assertTrue(isValid2,"api.isValidEmail() not returning true even for valid email:- automation@digoh.co.uk");
+
+        jsisValidEmail = "return DIGIOH_API.isValidEmail('automation@digioh');";
+        Boolean isValid3 = SeleniumUtil.executeJavascript_Boolean(driver, jsisValidEmail);
+        Assert.assertFalse(isValid3,"api.isValidEmail() returning true even for invalid email:- automation");
+    }
+
+    @Test(description = "Verify api.reload()")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Verify the api.reload() successfully closes all box and reinitializes the digioh rule engine")
+    public void digiohAPIReload() throws Exception {
+        BasicBox basicBox = new BasicBox(driver);
+        driver.get(testPageBaseUrl);
+
+        Thread.sleep(3000);
+
+        String jswriteCustomFlag = "return DIGIOH_API.writeCustomFlag('test_reload');";
+        SeleniumUtil.executeJavascript(driver, jswriteCustomFlag);
+
+        String jsReload = "return DIGIOH_API.reload();";
+        SeleniumUtil.executeJavascript(driver, jsReload);
+
+        basicBox.getTextInsideBox();
+        basicBox.closeBox();
+    }
+
+    @Test(description = "Verify api.enableReloadOnUrlChange()")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Verify the api.enableReloadOnUrlChange() corretly calls reloadDigioh on url changes")
+    public void digiohAPIenableReloadOnUrlChange() throws Exception {
+        driver.quit();
+        setUp();
+        BasicBox basicBox = new BasicBox(driver);
+        driver.get(testPageBaseUrl);
+
+        Thread.sleep(3000);
+
+        String jswriteCustomFlag = "return DIGIOH_API.writeCustomFlag('test_reload');";
+        SeleniumUtil.executeJavascript(driver, jswriteCustomFlag);
+
+        String reloadOnUrlChange = "return DIGIOH_API.enableReloadOnUrlChange();";
+        SeleniumUtil.executeJavascript(driver, reloadOnUrlChange);
+
+        String newUrl = "return history.pushState(null, '', 'https://digiohautotest.wpengine.com/newUrl');";
+        SeleniumUtil.executeJavascript(driver, newUrl);
+
+        basicBox.getTextInsideBox();
+        basicBox.closeBox();
+    }
+
+    @Test(description = "Verify api.isReady()")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Verify the api.isReady() correctly returns true when digioh has been fully initialized")
+    public void digiohApiIsReady() throws Exception {
+        BasicBox basicBox = new BasicBox(driver);
+        driver.get(testPageBaseUrl+"/?abort=1");
+
+        Thread.sleep(3000);
+
+        String jsIsReady = "return DIGIOH_API.isReady();";
+        Boolean isReady = SeleniumUtil.executeJavascript_Boolean(driver, jsIsReady);
+
+        Assert.assertFalse(isReady,"Expecting DIGOIOH.isReady() to return false but returned true");
+
+        driver.get(testPageBaseUrl);
+        Thread.sleep(3000);
+        Boolean isReady2 = true;
+        int waitSecs = 0;
+        while((!SeleniumUtil.executeJavascript_Boolean(driver, jsIsReady)) && waitSecs < 10) {
+            Thread.sleep(1000);
+            waitSecs+=1;
+        }
+        if(waitSecs>=10){
+            isReady2 = false;
+        }
+        Assert.assertTrue(isReady2,"Expecting DIGOIOH.isReady() to return true but returned false");
+    }
+
+    @Test(description = "Verify boxapi.getName()")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Verify the boxapi.getName() correctly returns the name of the box")
+    public void digiohBoxApiGetName() throws Exception {
+        BasicBox basicBox = new BasicBox(driver);
+        driver.get(testPageBaseUrl+"/?CURRENT_PAGE_URL_CONTAINS&tv=inline");
+
+        basicBox.getTextInsideBox();
+
+        String jsGetBoxName = "return boxapi.getName();";
+        String boxName = SeleniumUtil.executeJavascript(driver, jsGetBoxName);
+
+        Assert.assertEquals(boxName,"Blank Lightbox","Expecting boxapi.getName() not returning Blank Lightbox");
+    }
+
+    @Test(description = "Verify boxapi.getId()")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Verify the boxapi.getId() correctly returns the id of the box")
+    public void digiohBoxApiGetId() throws Exception {
+        driver.get(portalBaseUrl);
+        LoginPage loginPage = new LoginPage(driver);
+        DashboardPage dashboardPage = loginPage.login(username,password);
+        List<String> ids = dashboardPage.fetchAccountIds("Blank Lightbox");
+        dashboardPage.logoutPage(driver);
+        BasicBox basicBox = new BasicBox(driver);
+
+        driver.get(testPageBaseUrl+"/?CURRENT_PAGE_URL_CONTAINS&tv=inline");
+
+        basicBox.getTextInsideBox();
+
+        String jsGetBoxId = "return boxapi.getId();";
+        String boxId = SeleniumUtil.executeJavascript(driver, jsGetBoxId);
+
+        Assert.assertEquals(boxId,ids.get(0),"Expecting boxapi.id() not returning box id");
+    }
+
+    @Test(description = "Verify boxapi.getBoxType()")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Verify the boxapi.getBoxType() correctly returns the id of the box")
+    public void digiohBoxApiGetBoxType() throws Exception {
+        BasicBox basicBox = new BasicBox(driver);
+
+        driver.get(testPageBaseUrl+"/?CURRENT_PAGE_URL_CONTAINS&tv=inline");
+
+        basicBox.getTextInsideBox();
+
+        String jsGetBoxType = "return boxapi.getBoxType();";
+        String boxType = SeleniumUtil.executeJavascript(driver, jsGetBoxType);
+
+        Assert.assertEquals(boxType,"lightbox","Expecting boxapi.getBoxType() to return lightbox but actually it returns:- "+boxType);
+    }
+
+    @Test(description = "Verify boxapi.getBoxFrameWrapper()")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Verify the boxapi.getBoxFrameWrapper() correctly returns the BoxFrameWrapper details")
+    public void digiohBoxApiGetBoxFrameWrapper() throws Exception {
+        BasicBox basicBox = new BasicBox(driver);
+
+        driver.get(testPageBaseUrl+"/?CURRENT_PAGE_URL_CONTAINS&tv=inline");
+
+        basicBox.getTextInsideBox();
+
+        String jsGetBoxFrameWrapper = "return boxapi.getBoxFrameWrapper().length";
+        Long boxFrameWrapper = SeleniumUtil.executeJavascript_Long(driver, jsGetBoxFrameWrapper);
+
+        Assert.assertEquals(boxFrameWrapper,Long.valueOf(1),"Expecting boxapi.getBoxFrameWrapper() to return length of array 1, but the actual size of array is :-"+ boxFrameWrapper);
+    }
+
+    @Test(description = "Verify boxapi.showPage('PageName')")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Verify the boxapi.showPage('PageName') correctly redirects to the correct page of the box")
+    public void digiohBoxApiShowPage() throws Exception {
+        EmailBox emailBox = new EmailBox(driver);
+        driver.get(testPageBaseUrl+UrlPaths.EMAIL_FORM_SUBMIT);
+        String email = "nishbluellabel+"+ GenericUtil.getCurrentTimestamp()+"@gmail.com";
+
+        emailBox.waitForBoxToAppear(15);
+
+        String jsGetBoxApiShowPage = "return boxapi.showPage('thx')";
+        String boxApiShowPage = SeleniumUtil.executeJavascript(driver, jsGetBoxApiShowPage);
+        Assert.assertTrue(emailBox.verifyThankYouMessageAppearingSuccessfully(),"boxapi.showPage('thx') not redirecting to thank you page");
+
+        String jsGetBoxApiShowPage1 = "return boxapi.showPage('ep1')";
+        String boxApiShowPage1 = SeleniumUtil.executeJavascript(driver, jsGetBoxApiShowPage1);
+        Assert.assertTrue(emailBox.verifyExtraPage1Successfully(),"boxapi.showPage('ep1') not redirecting to special text1 page");
+
+        String jsGetBoxApiShowMainPage = "return boxapi.showPage('main')";
+        String boxApiShowMainPage = SeleniumUtil.executeJavascript(driver, jsGetBoxApiShowMainPage);
+        Assert.assertTrue(emailBox.verifySignUpForNewsLetterHeaderAppers(),"boxapi.showPage('main') not redirecting to main page");
+    }
+
+    @Test(description = "Verify boxapi.showMainPage()")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Verify the boxapi.showMainPage() correctly redirects to the correct main page of the box")
+    public void digiohBoxApiShowMainPage() throws Exception {
+        EmailBox emailBox = new EmailBox(driver);
+        driver.get(testPageBaseUrl+UrlPaths.EMAIL_FORM_SUBMIT);
+        String email = "nishbluellabel+"+ GenericUtil.getCurrentTimestamp()+"@gmail.com";
+
+        emailBox.waitForBoxToAppear(15);
+
+        String jsGetBoxApiShowPage = "return boxapi.showPage('thx')";
+        String boxApiShowPage = SeleniumUtil.executeJavascript(driver, jsGetBoxApiShowPage);
+        Assert.assertTrue(emailBox.verifyThankYouMessageAppearingSuccessfully(),"boxapi.showPage('thx') not redirecting to thank you page");
+
+        String jsGetBoxApiShowMainPage = "return boxapi.showMainPage()";
+        String boxApiShowMainPage = SeleniumUtil.executeJavascript(driver, jsGetBoxApiShowMainPage);
+        Assert.assertTrue(emailBox.verifySignUpForNewsLetterHeaderAppers(),"boxapi.showMainPage() not redirecting to main page");
+    }
+
+    @Test(description = "Verify boxapi.showThankYouPage()")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Verify the boxapi.showThankYouPage() correctly redirects to the thank you page")
+    public void digiohBoxApiShowThankYouPage() throws Exception {
+        EmailBox emailBox = new EmailBox(driver);
+        driver.get(testPageBaseUrl+UrlPaths.EMAIL_FORM_SUBMIT);
+        String email = "nishbluellabel+"+ GenericUtil.getCurrentTimestamp()+"@gmail.com";
+
+        emailBox.waitForBoxToAppear(15);
+
+        String jsGetBoxApiShowThankYouPage= "return boxapi.showThankYouPage()";
+        String boxApiShowThankYouPage = SeleniumUtil.executeJavascript(driver, jsGetBoxApiShowThankYouPage);
+        Assert.assertTrue(emailBox.verifyThankYouMessageAppearingSuccessfully(),"boxapi.showThankYouPage() not redirecting to thankyou page");
+    }
+
+    @Test(description = "Verify boxapi.showExtraPage(number)")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Verify the boxapi.showExtraPage(number) correctly redirects to the extra page")
+    public void digiohBoxApiShowExtraPage() throws Exception {
+        EmailBox emailBox = new EmailBox(driver);
+        driver.get(testPageBaseUrl+UrlPaths.EMAIL_FORM_SUBMIT);
+        String email = "nishbluellabel+"+ GenericUtil.getCurrentTimestamp()+"@gmail.com";
+
+        emailBox.waitForBoxToAppear(15);
+
+        String jsGetBoxApiShowExtraPage= "return boxapi.showExtraPage(1)";
+        String boxApiShowExtraPage = SeleniumUtil.executeJavascript(driver, jsGetBoxApiShowExtraPage);
+        Assert.assertTrue(emailBox.verifyExtraPage1Successfully(),"boxapi.showExtraPage(1) not redirecting to first extra page successfully");
+    }
+
+    @Test(description = "Verify boxapi.isMainPage()")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Verify the boxapi.isMainPage() correctly returns whether its main page or not")
+    public void digiohBoxApiIsMainPage() throws Exception {
+        EmailBox emailBox = new EmailBox(driver);
+        driver.get(testPageBaseUrl+UrlPaths.EMAIL_FORM_SUBMIT);
+        String email = "nishbluellabel+"+ GenericUtil.getCurrentTimestamp()+"@gmail.com";
+
+        emailBox.waitForBoxToAppear(15);
+
+        String jsGetBoxApiIsMainPage= "return boxapi.isMainPage()";
+        Boolean boxApiIsMainPage = SeleniumUtil.executeJavascript_Boolean(driver, jsGetBoxApiIsMainPage);
+        Assert.assertTrue(boxApiIsMainPage,"boxapi.isMainPage() not returning true even on main page");
+
+        String jsGetBoxApiShowExtraPage= "return boxapi.showExtraPage(1)";
+        String boxApiShowExtraPage = SeleniumUtil.executeJavascript(driver, jsGetBoxApiShowExtraPage);
+        emailBox.verifyExtraPage1Successfully();
+
+        String jsGetBoxApiIsMainPage1= "return boxapi.isMainPage()";
+        Boolean boxApiIsMainPage1 = SeleniumUtil.executeJavascript_Boolean(driver, jsGetBoxApiIsMainPage1);
+        Assert.assertFalse(boxApiIsMainPage1,"boxapi.isMainPage() not returning false when NOT on main page");
+    }
+
+    @Test(description = "Verify boxapi.isThankYouPage()")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Verify the boxapi.isThankYouPage() correctly returns whether its Thank You page or not")
+    public void digiohBoxApiIsThankYouPage() throws Exception {
+        EmailBox emailBox = new EmailBox(driver);
+        driver.get(testPageBaseUrl+UrlPaths.EMAIL_FORM_SUBMIT);
+        String email = "nishbluellabel+"+ GenericUtil.getCurrentTimestamp()+"@gmail.com";
+
+        emailBox.waitForBoxToAppear(15);
+
+        String jsGetBoxApiIsThankYouPage= "return boxapi.isThankYouPage()";
+        Boolean boxApiIsThankYouPage = SeleniumUtil.executeJavascript_Boolean(driver, jsGetBoxApiIsThankYouPage);
+        Assert.assertFalse(boxApiIsThankYouPage,"boxapi.isThankYouPage() returning true even when not on ThankYou page");
+
+        String jsGetBoxApiShowThankYoupage= "return boxapi.showThankYouPage()";
+        String boxApiShowThankYoupage = SeleniumUtil.executeJavascript(driver, jsGetBoxApiShowThankYoupage);
+        emailBox.verifyThankYouMessageAppearingSuccessfully();
+
+        String jsGetBoxApiIsThankYouPage1= "return boxapi.isThankYouPage()";
+        Boolean boxApiIsThanYouPage1 = SeleniumUtil.executeJavascript_Boolean(driver, jsGetBoxApiIsThankYouPage1);
+        Assert.assertTrue(boxApiIsThanYouPage1,"boxapi.isThankYouPage() not returning true when on ThankYou page");
+    }
+
+    @Test(description = "Verify boxapi.isExtraPage()")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Verify the boxapi.isExtraPage() correctly returns whether its extra page or not")
+    public void digiohBoxApiIsExtraPage() throws Exception {
+        EmailBox emailBox = new EmailBox(driver);
+        driver.get(testPageBaseUrl+UrlPaths.EMAIL_FORM_SUBMIT);
+        String email = "nishbluellabel+"+ GenericUtil.getCurrentTimestamp()+"@gmail.com";
+
+        emailBox.waitForBoxToAppear(15);
+
+        String jsGetBoxApiIsExtraPage = "return boxapi.isExtraPage(1)";
+        Boolean boxApiIsExtraPage = SeleniumUtil.executeJavascript_Boolean(driver, jsGetBoxApiIsExtraPage);
+        Assert.assertFalse(boxApiIsExtraPage,"boxapi.isExtraPage(1) returning true even when not on Extra page");
+
+        String jsGetBoxApiShowExtraPage = "return boxapi.showExtraPage(1)";
+        String boxApiShowExtraPage = SeleniumUtil.executeJavascript(driver, jsGetBoxApiShowExtraPage);
+        emailBox.verifyExtraPage1Successfully();
+
+        String jsGetBoxApiIsExtraPage1= "return boxapi.isExtraPage(1)";
+        Boolean boxApiIsExtraPage1 = SeleniumUtil.executeJavascript_Boolean(driver, jsGetBoxApiIsExtraPage1);
+        Assert.assertTrue(boxApiIsExtraPage1,"boxapi.isExtraPage(1) not returning true when on Extra page");
     }
 }

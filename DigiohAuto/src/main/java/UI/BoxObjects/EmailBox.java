@@ -36,6 +36,12 @@ public class EmailBox extends BaseBox {
     @FindBy(id="error_message")
     private WebElement errorMessage;
 
+    @FindBy(id="ep1text1")
+    private WebElement specialText1;
+
+    @FindBy(id="text1")
+    private WebElement emailBoxMainTitle;
+
     @Step("Waiting for SubmitEmail Box to appear")
     public void waitForBoxToAppear(int seconds){
         WebDriverWait wait = new WebDriverWait(driver,seconds);
@@ -73,6 +79,26 @@ public class EmailBox extends BaseBox {
             return false;
     }
 
+    @Step("Verify Extra Page1 message appears in the SubmitEmail Box")
+    public Boolean verifyExtraPage1Successfully(){
+        WebDriverWait wait = new WebDriverWait(driver,5);
+        wait.until(ExpectedConditions.visibilityOf(specialText1));
+        if(specialText1.getText().equals("Extra Page 1"))
+            return true;
+        else
+            return false;
+    }
+
+    @Step("Verify Sign Up For Our Newsletter header appears on the email box main page")
+    public Boolean verifySignUpForNewsLetterHeaderAppers(){
+        WebDriverWait wait = new WebDriverWait(driver,5);
+        wait.until(ExpectedConditions.visibilityOf(emailBoxMainTitle));
+        if(emailBoxMainTitle.getText().equals("SIGN UP FOR OUR NEWSLETTER"))
+            return true;
+        else
+            return false;
+    }
+
     @Step("Verify Email icon appears in the SubmitEmail Box")
     public Boolean verifyEmailIconAppearsSuccessfully(){
         WebDriverWait wait = new WebDriverWait(driver,5);
@@ -94,7 +120,7 @@ public class EmailBox extends BaseBox {
     public void closeBox(){
         closeModal.click();
         driver.switchTo().defaultContent();
-        WebDriverWait wait = new WebDriverWait(driver,5);
+        WebDriverWait wait = new WebDriverWait(driver,15);
         wait.until(ExpectedConditions.invisibilityOf(emailBoxiFrame));
     }
 
