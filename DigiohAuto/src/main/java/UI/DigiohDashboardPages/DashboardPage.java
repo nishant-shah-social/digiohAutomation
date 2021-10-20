@@ -40,6 +40,12 @@ public class DashboardPage extends BasePage {
     @FindBy(xpath = "//a[contains(text(),'Logout')]")
     private WebElement logout;
 
+    @FindBy(id= "publish-all")
+    private WebElement publish;
+
+    @FindBy(id= "alert_success_message")
+    private WebElement successMessage;
+
     @Step("Navigate to the Analytics page")
     public AnalyticsSubmissionsPage navigateToAnalyticsPage(){
         analyticsMenu.click();
@@ -73,6 +79,15 @@ public class DashboardPage extends BasePage {
         WebDriverWait wait = new WebDriverWait(driver,15);
         wait.until(ExpectedConditions.elementToBeClickable(logout)).click();
         return new LoginPage(driver);
+    }
+
+    @Step("Publish boxes from digioh dashboard")
+    public void publishBoxes(WebDriver driver) throws InterruptedException {
+        publish.click();
+        WebDriverWait wait = new WebDriverWait(driver,15);
+        wait.until(ExpectedConditions.visibilityOf(successMessage));
+        //waiting for the changes to propogate through CDN
+        Thread.sleep(5000);
     }
 
 }

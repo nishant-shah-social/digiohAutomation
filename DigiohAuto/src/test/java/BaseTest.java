@@ -1,5 +1,8 @@
 import GenericUtilities.PropertyUtil;
+import UI.DigiohDashboardPages.DashboardPage;
+import UI.DigiohDashboardPages.LoginPage;
 import UI.SeleniumUtils.SeleniumUtil;
+import UI.TestAppPages.TestAppHomePage;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
@@ -24,6 +27,7 @@ public class BaseTest {
     String portalBaseUrl;
     String username;
     String password;
+    int setupExecutionCount = 0;
 
     @BeforeClass
     public void setUp() throws Exception {
@@ -38,6 +42,15 @@ public class BaseTest {
         password = PropertyUtil.getInstance().getValue("digiohPortalPassword");
         seleniumUtil =  new SeleniumUtil();
         driver.manage().window().maximize();
+
+        if(setupExecutionCount == 0) {
+            driver.get(portalBaseUrl);
+            LoginPage loginPage = new LoginPage(driver);
+            DashboardPage dashboardPage = loginPage.login(username, password);
+            dashboardPage.publishBoxes(driver);
+            dashboardPage.logoutPage(driver);
+        }
+        setupExecutionCount++;
     }
 
     private WebDriver setBrowser(String browserName) throws MalformedURLException {
